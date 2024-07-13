@@ -1,0 +1,2 @@
+class Config:
+    config:dict
