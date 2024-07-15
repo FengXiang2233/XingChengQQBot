@@ -38,9 +38,14 @@ class QQApi:
         return appAccessToken
 
     def updateAppAccessToken(self):
-        time.sleep(float(self.appAccessToken["expires_in"])-40)
-        self.appAccessToken=self.getAppAccessToken(self.appId,self.clientSecret)
-        log.info("AppAccessToken已更新")
+        while True:
+            time.sleep(float(self.appAccessToken["expires_in"])-40)
+            self.appAccessToken=self.getAppAccessToken(self.appId,self.clientSecret)
+            self.requestHeaders={
+                "Authorization": "QQBot "+self.appAccessToken["access_token"],
+                "X-Union-Appid": self.appId
+            }
+            log.debug("AppAccessToken已更新")
 
     def getWebSocketAddress(self)->str:
         return requests.get(self.qq_api+"/gateway",headers=self.requestHeaders).json()["url"]
@@ -87,6 +92,7 @@ class QQMessage:
         op_table={
             0: self.Dispatch,
             10: self.Hello,
+            11: self.HeartbeatACK,
         }
         op_table[msg["op"]](msg)
 
@@ -146,3 +152,7 @@ class QQMessage:
                 }
             }
         ))
+
+    # op 11
+    def HeartbeatACK(self,msg:dict):
+        log.debug("心跳包已返回")

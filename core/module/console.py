@@ -6,6 +6,7 @@ class Console:
     qq_api = QQApi()
 
     cmd={
+        "exit":exit,
         "login":qq_api.login
     }
 
