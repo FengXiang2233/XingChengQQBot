@@ -1,7 +1,7 @@
 from core.init.init import init
 from core.network.QQApi import QQApi
+from core.module.console import Console
 
 init()
-QQApi().login()
 while True:
-    pass
+    Console().analytic(input("> "))

@@ -24,7 +24,10 @@ class QQApi:
             "Authorization": "QQBot "+self.appAccessToken["access_token"],
             "X-Union-Appid": self.appId
         }
-        threading.Thread(target=QQWebSocket().connect(self.getWebSocketAddress(),self))
+        # ws线程
+        threading.Thread(target=QQWebSocket().connect,args=(self.getWebSocketAddress(),self)).start()
+        # AppAccessToken更新线程
+        threading.Thread(target=self.updateAppAccessToken).start()
 
     def getAppAccessToken(self,appId:str,clientSecret:str)->dict:
         appAccessToken:dict=requests.post("https://bots.qq.com/app/getAppAccessToken",json={
@@ -32,13 +35,12 @@ class QQApi:
             "clientSecret": clientSecret
         }).json()
         print(appAccessToken)
-        appAccessToken["expires_time"]=int(appAccessToken["expires_in"])+time.time()
-        appAccessToken.pop("expires_in")
         return appAccessToken
 
-    def checkAppAccessToken(self,AppAccessToken:dict)->dict:
-        if(AppAccessToken["expires_time"]-time.time()<=60):
-            return self.getAppAccessToken
+    def updateAppAccessToken(self):
+        time.sleep(float(self.appAccessToken["expires_in"])-40)
+        self.appAccessToken=self.getAppAccessToken(self.appId,self.clientSecret)
+        log.info("AppAccessToken已更新")
 
     def getWebSocketAddress(self)->str:
         return requests.get(self.qq_api+"/gateway",headers=self.requestHeaders).json()["url"]
