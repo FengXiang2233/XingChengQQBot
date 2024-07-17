@@ -5,6 +5,8 @@ import websocket
 import threading
 
 from core.module.log import log
+from core.g_var import Event as g_var_e
+from core.module.Event.EventGroups import EventGroup
 
 class QQApi:
 
@@ -15,6 +17,8 @@ class QQApi:
 
     qq_api="https://api.sgroup.qq.com"
     requestHeaders:dict
+
+    eventGroupsMap:dict={}
 
     def login(self,appId:str,clientSecret:str):
         self.appId=appId
@@ -50,6 +54,15 @@ class QQApi:
     def getWebSocketAddress(self)->str:
         return requests.get(self.qq_api+"/gateway",headers=self.requestHeaders).json()["url"]
 
+    def getPluginRegisterEvent(self):
+        # 写eventGroupsMap
+        self.eventGroupsMap:dict={}
+        for name, value in EventGroup.__dict__.items():
+            if(isinstance(value,type)):
+                self.eventGroupsMap[value]=0
+        for e in g_var_e.eventMap.keys():
+            self.eventGroupsMap[e.group]+=1
+    
     def sendGroupMessages(self,group_openid,msg,re_msg_id,msg_type=0):
         print(requests.post(
             url=self.qq_api+"/v2/groups/"+group_openid+"/messages",
@@ -60,6 +73,7 @@ class QQApi:
                 "msg_id": re_msg_id
             }
         ).json())
+
 
 class QQWebSocket:
 
@@ -141,6 +155,11 @@ class QQMessage:
     def Hello(self,msg:dict):
         # 心跳包线程
         threading.Thread(target=self.ack,args=[msg["d"]["heartbeat_interval"]/1000.0000]).start()
+        self.qq_api.getPluginRegisterEvent()
+        intents=0
+        for e in self.qq_api.eventGroupsMap.keys():
+            if self.qq_api.eventGroupsMap[e] > 0:
+                intents=intents|e.id
         # 注册session会话
         self.wsObj.send(json.dumps(
             {
@@ -148,7 +167,7 @@ class QQMessage:
                 "d": {
                     "token": "QQBot "+self.qq_api.appAccessToken["access_token"],
                     "shard": [0,1],
-                    "intents": 0 | 1 << 25
+                    "intents": intents
                 }
             }
         ))
