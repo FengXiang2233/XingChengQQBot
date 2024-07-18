@@ -13,7 +13,6 @@ class Console:
     def analytic(self,command:str):
         cmd=command.split(" ")
         try:
-            print(*(cmd[1:]))
             self.cmd[cmd[0]](*(cmd[1:]))
         except IndexError:
             log.warn("指令不存在")

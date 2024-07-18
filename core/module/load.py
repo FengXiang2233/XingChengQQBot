@@ -7,6 +7,7 @@ from core.g_var import Event as g_var_e
 
 class load:
     def load():
+        g_var_e.eventMap={}
         # 写eventMap
         for name, value in Event.__dict__.items():
             if(isinstance(value,type)):

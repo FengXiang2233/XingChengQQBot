@@ -61,7 +61,8 @@ class QQApi:
             if(isinstance(value,type)):
                 self.eventGroupsMap[value]=0
         for e in g_var_e.eventMap.keys():
-            self.eventGroupsMap[e.group]+=1
+            if(len(g_var_e.eventMap[e]) > 0):
+                self.eventGroupsMap[e.group]+=1
     
     def sendGroupMessages(self,group_openid,msg,re_msg_id,msg_type=0):
         print(requests.post(
